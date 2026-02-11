@@ -72,8 +72,8 @@ RUN apt-get update && apt-get install -y --no-install-recommends \
     libgtk-3-0 libvulkan1 libegl1 libfribidi0 libharfbuzz0b curl \
     # FFmpeg runtime shared libraries (needed for the multi-stage build)
     libx264-163 libx265-199 libvpx7 libmp3lame0 libopus0 \
-    libvorbis0a libvorbisenc2 libtheora0 libspeex1 libwebp7 \
-    libnuma1 libfreetype6 libaom3 libdav1d5 libgnutls30 \
+    libvorbis0a libvorbisenc2 libtheora0 libspeex1 libwebp7 libwebpmux3 \
+    libnuma1 libfreetype6 libaom3 libdav1d5 libgnutls30 libzimg2 \
     && rm -rf /var/lib/apt/lists/* \
     && ln -s /usr/bin/python3 /usr/bin/python
 
