@@ -64,12 +64,16 @@ ENV DEBIAN_FRONTEND=noninteractive
 ENV PATH="/usr/local/bin:${PATH}"
 ENV PYTHONUNBUFFERED=1
 
-# Install runtime dependencies
+# Install runtime dependencies (including FFmpeg shared libraries)
 RUN apt-get update && apt-get install -y --no-install-recommends \
     python3 python3-pip ca-certificates libssl3 fonts-liberation fontconfig \
     libnss3 libatk1.0-0 libatk-bridge2.0-0 libcups2 libxcomposite1 libxrandr2 \
     libxdamage1 libgbm1 libasound2 libpangocairo-1.0-0 libpangoft2-1.0-0 \
     libgtk-3-0 libvulkan1 libegl1 libfribidi0 libharfbuzz0b curl \
+    # FFmpeg runtime shared libraries (needed for the multi-stage build)
+    libx264-163 libx265-199 libvpx7 libmp3lame0 libopus0 \
+    libvorbis0a libvorbisenc2 libtheora0 libspeex1 libwebp7 \
+    libnuma1 libfreetype6 libaom3 libdav1d5 libgnutls30 \
     && rm -rf /var/lib/apt/lists/* \
     && ln -s /usr/bin/python3 /usr/bin/python
 
