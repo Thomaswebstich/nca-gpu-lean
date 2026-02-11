@@ -22,7 +22,7 @@ import logging
 import requests
 import subprocess
 from services.file_management import download_file
-# import torch (Removed for Lean)
+import os
 
 def is_gpu_available():
     return os.path.exists('/dev/nvidia0')

@@ -57,10 +57,8 @@ RUN git clone https://github.com/FFmpeg/FFmpeg.git ffmpeg && cd ffmpeg && git ch
     --extra-ldflags="-L/usr/local/cuda/lib64" && \
     make -j$(nproc) && make install && cd .. && rm -rf ffmpeg
 
-# 9. Pre-install Python libs into a specific directory to copy later
-RUN pip3 install --no-cache-dir --upgrade pip
+# 9. Copy requirements for the runner stage later
 COPY requirements.txt .
-RUN pip3 install --no-cache-dir --prefix=/install -r requirements.txt
 
 # ========== STAGE 2: RUNNER (LEAN) ==========
 FROM nvidia/cuda:11.8.0-runtime-ubuntu22.04
