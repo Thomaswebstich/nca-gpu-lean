@@ -75,8 +75,11 @@ RUN apt-get update && apt-get install -y --no-install-recommends \
     libx264-163 libx265-199 libvpx7 libmp3lame0 libopus0 \
     libvorbis0a libvorbisenc2 libtheora0 libspeex1 libwebp7 libwebpmux3 \
     libnuma1 libfreetype6 libaom3 libdav1d5 libgnutls30 libzimg2 \
+    # Chromium runtime dependencies
+    dbus dbus-x11 x11-utils libx11-xcb1 \
     && rm -rf /var/lib/apt/lists/* \
-    && ln -s /usr/bin/python3 /usr/bin/python
+    && ln -s /usr/bin/python3 /usr/bin/python \
+    && mkdir -p /tmp/.X11-unix && chmod 1777 /tmp/.X11-unix
 
 # Copy compiled tools (FFmpeg, SRT, libass, etc.) from builder
 COPY --from=builder /usr/local /usr/local
