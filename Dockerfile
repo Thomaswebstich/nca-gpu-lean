@@ -70,6 +70,7 @@ RUN apt-get update && apt-get install -y --no-install-recommends \
     libnss3 libatk1.0-0 libatk-bridge2.0-0 libcups2 libxcomposite1 libxrandr2 \
     libxdamage1 libgbm1 libasound2 libpangocairo-1.0-0 libpangoft2-1.0-0 \
     libgtk-3-0 libvulkan1 libegl1 libfribidi0 libharfbuzz0b curl \
+    xvfb chromium-browser libgl1 libglx-mesa0 libgl1-mesa-dri \
     # FFmpeg runtime shared libraries (needed for the multi-stage build)
     libx264-163 libx265-199 libvpx7 libmp3lame0 libopus0 \
     libvorbis0a libvorbisenc2 libtheora0 libspeex1 libwebp7 libwebpmux3 \
@@ -112,4 +113,4 @@ HEALTHCHECK --interval=5s --timeout=3s --start-period=10s --retries=3 \
 
 # Use exec form CMD directly — no shell script wrapper needed.
 # This ensures gunicorn runs as PID 1 and receives signals correctly.
-CMD ["gunicorn", "--config", "gunicorn.conf.py", "app:app"]
+CMD ["xvfb-run", "--auto-servernum", "--server-args='-screen 0 1920x1080x24'", "gunicorn", "--config", "gunicorn.conf.py", "app:app"]
