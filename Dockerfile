@@ -57,9 +57,6 @@ RUN git clone https://github.com/FFmpeg/FFmpeg.git ffmpeg && cd ffmpeg && git ch
     --extra-ldflags="-L/usr/local/cuda/lib64" && \
     make -j$(nproc) && make install && cd .. && rm -rf ffmpeg
 
-# 9. Copy requirements for the runner stage later
-COPY requirements.txt .
-
 # ========== STAGE 2: RUNNER (LEAN) ==========
 FROM nvidia/cuda:11.8.0-runtime-ubuntu22.04
 
@@ -72,7 +69,7 @@ RUN apt-get update && apt-get install -y --no-install-recommends \
     python3 python3-pip ca-certificates libssl3 fonts-liberation fontconfig \
     libnss3 libatk1.0-0 libatk-bridge2.0-0 libcups2 libxcomposite1 libxrandr2 \
     libxdamage1 libgbm1 libasound2 libpangocairo-1.0-0 libpangoft2-1.0-0 \
-    libgtk-3-0 libvulkan1 libegl1 libfribidi0 libharfbuzz0b \
+    libgtk-3-0 libvulkan1 libegl1 libfribidi0 libharfbuzz0b curl \
     && rm -rf /var/lib/apt/lists/* \
     && ln -s /usr/bin/python3 /usr/bin/python
 
@@ -84,14 +81,16 @@ RUN ldconfig
 
 WORKDIR /app
 
-# Install Python requirements here (cleaner than prefix copying)
+# Install Python requirements first (for better Docker layer caching)
 COPY requirements.txt .
 RUN pip3 install --no-cache-dir --upgrade pip && \
     pip3 install --no-cache-dir -r requirements.txt
 
-# Copy application files
+# Copy fonts
 COPY ./fonts /usr/share/fonts/custom
 RUN fc-cache -f -v
+
+# Copy application files
 COPY . .
 
 # Setup User
@@ -103,12 +102,10 @@ RUN python3 -m playwright install chromium
 
 EXPOSE 8080
 
-RUN cat <<EOF > /app/run_gunicorn.sh
-#!/bin/bash
-echo "🚀 NCA-GPU-LEAN VERSION 3 STARTING..."
-sleep 2
-gunicorn --config gunicorn.conf.py app:app
-EOF
-RUN chmod +x /app/run_gunicorn.sh
+# Health check for startup probe
+HEALTHCHECK --interval=5s --timeout=3s --start-period=10s --retries=3 \
+    CMD curl -f http://localhost:8080/health || exit 1
 
-CMD ["/app/run_gunicorn.sh"]
+# Use exec form CMD directly — no shell script wrapper needed.
+# This ensures gunicorn runs as PID 1 and receives signals correctly.
+CMD ["gunicorn", "--config", "gunicorn.conf.py", "app:app"]

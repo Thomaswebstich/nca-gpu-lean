@@ -1,21 +1,31 @@
+# Core framework
 Flask
 Werkzeug
-requests
-ffmpeg-python
 gunicorn
-APScheduler
-srt
+
+# HTTP & webhooks
+requests
+
+# FFmpeg Python binding
+ffmpeg-python
+
+# S3-compatible storage
+boto3
+
+# GCP storage & Cloud Run
 google-auth
-google-auth-oauthlib
-google-auth-httplib2
-google-api-python-client
-google-api-core
 google-cloud-storage
 google-cloud-run
-psutil
-boto3
-Pillow
-matplotlib
-yt-dlp
+google-api-core
+
+# Payload validation
 jsonschema
+
+# Process monitoring
+psutil
+
+# Playwright (for /v1/code/execute/python HTML rendering)
 playwright
+
+# Media download
+yt-dlp

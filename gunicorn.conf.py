@@ -1,38 +1,33 @@
-# Copyright (c) 2025 Stephen G. Pope
-#
-# This program is free software; you can redistribute it and/or modify
-# it under the terms of the GNU General Public License as published by
-# the Free Software Foundation; either version 2 of the License, or
-# (at your option) any later version.
-#
-# This program is distributed in the hope that it will be useful,
-# but WITHOUT ANY WARRANTY; without even the implied warranty of
-# MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the
-# GNU General Public License for more details.
-#
-# You should have received a copy of the GNU General Public License along
-# with this program; if not, write to the Free Software Foundation, Inc.,
-# 51 Franklin Street, Fifth Floor, Boston, MA 02110-1301 USA.
-
-
-###########################################################################
-
-# Author: Harrison Fisher (https://github.com/HarrisonFisher)
-# Date: May 2025
+# NCA-GPU-LEAN Gunicorn Configuration
 import os
 import json
 import requests
 import time
-
-# Description: This script configures the server to automatically trigger a job request
-#              at startup when running as a GCP Cloud Run Job, and shut down the server
-#              once the job completes or if an error occurs.
 
 bind = "0.0.0.0:8080"
 workers = int(os.environ.get("GUNICORN_WORKERS", 1))
 timeout = int(os.environ.get("GUNICORN_TIMEOUT", 3600))
 keepalive = 80
 worker_class = "sync"
+
+# Faster startup: preload the app so workers fork from a ready parent
+preload_app = True
+
+
+def on_starting(server):
+    """Hook called when Gunicorn starts (before workers)."""
+    print("🚀 NCA-GPU-LEAN starting up...")
+
+
+def when_ready(server):
+    """Hook called when Gunicorn server is ready to accept connections."""
+    print("✅ NCA-GPU-LEAN is READY and accepting connections on port 8080")
+
+    # If running as a GCP Cloud Run Job, execute the job task
+    if os.environ.get("CLOUD_RUN_JOB"):
+        import threading
+        thread = threading.Thread(target=cloud_run_job_task)
+        thread.start()
 
 
 def cloud_run_job_task():
@@ -64,10 +59,7 @@ def cloud_run_job_task():
         if response.status_code in [200, 202]:
             print("✅ Job completed successfully")
             print(json.dumps(response.json(), indent=2))
-            # Webhook already sent by app.py if needed
-
         else:
-            # Error case - we need to notify user via webhook
             print(f"❌ Job failed with status {response.status_code}")
             try:
                 error_response = response.json() if response.headers.get('content-type') == 'application/json' else {"error": response.text}
@@ -75,7 +67,6 @@ def cloud_run_job_task():
                 error_response = {"error": response.text}
             print(json.dumps(error_response, indent=2))
 
-            # Send webhook notification of failure
             if webhook_url:
                 try:
                     webhook_data = {
@@ -93,7 +84,6 @@ def cloud_run_job_task():
 
     except requests.RequestException as e:
         print(f"❌ Request error: {e}")
-        # Try to send webhook about the error
         try:
             if webhook_url:
                 webhook_data = {
@@ -114,11 +104,3 @@ def cloud_run_job_task():
     finally:
         print("🛑 Shutting down...")
         os._exit(0)
-
-
-def when_ready(server):
-    """Hook called when Gunicorn server is ready."""
-    if os.environ.get("CLOUD_RUN_JOB"):
-        import threading
-        thread = threading.Thread(target=cloud_run_job_task)
-        thread.start()
