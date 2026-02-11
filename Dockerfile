@@ -96,7 +96,7 @@ EXPOSE 8080
 
 RUN cat <<EOF > /app/run_gunicorn.sh
 #!/bin/bash
-echo "🚀 NCA-GPU-LEAN (MULTI-STAGE) STARTING..."
+echo "🚀 NCA-GPU-LEAN VERSION 2 STARTING..."
 sleep 2
 gunicorn --config gunicorn.conf.py app:app
 EOF
