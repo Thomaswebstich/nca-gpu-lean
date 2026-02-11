@@ -2,6 +2,9 @@
 FROM nvidia/cuda:11.8.0-devel-ubuntu22.04 AS builder
 
 ENV DEBIAN_FRONTEND=noninteractive
+ENV PATH="/usr/local/cuda/bin:${PATH}"
+ENV LD_LIBRARY_PATH="/usr/local/cuda/lib64:${LD_LIBRARY_PATH}"
+ENV PKG_CONFIG_PATH="/usr/local/lib/pkgconfig:${PKG_CONFIG_PATH}"
 
 # Install build tools
 RUN apt-get update && apt-get install -y --no-install-recommends \
@@ -49,7 +52,10 @@ RUN git clone https://github.com/FFmpeg/FFmpeg.git ffmpeg && cd ffmpeg && git ch
     --enable-libvpx --enable-libwebp --enable-libmp3lame --enable-libopus --enable-libvorbis \
     --enable-libtheora --enable-libspeex --enable-libass --enable-libfreetype --enable-libharfbuzz \
     --enable-fontconfig --enable-libsrt --enable-filter=drawtext --enable-gnutls --enable-cuda-nvcc \
-    --enable-libnpp --enable-nonfree && make -j$(nproc) && make install && cd .. && rm -rf ffmpeg
+    --enable-libnpp --enable-nonfree \
+    --extra-cflags="-I/usr/local/cuda/include" \
+    --extra-ldflags="-L/usr/local/cuda/lib64" && \
+    make -j$(nproc) && make install && cd .. && rm -rf ffmpeg
 
 # 9. Pre-install Python libs into a specific directory to copy later
 RUN pip3 install --no-cache-dir --upgrade pip
