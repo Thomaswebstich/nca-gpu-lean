@@ -4,7 +4,7 @@ import json
 import requests
 import time
 
-bind = "0.0.0.0:8080"
+bind = "[::]:8080"  # Dual-stack: listens on BOTH IPv6 and IPv4 (required for Salad.ai)
 workers = int(os.environ.get("GUNICORN_WORKERS", 1))
 timeout = int(os.environ.get("GUNICORN_TIMEOUT", 3600))
 keepalive = 80
