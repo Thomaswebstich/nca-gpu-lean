@@ -22,10 +22,10 @@ import logging
 import requests
 import subprocess
 from services.file_management import download_file
-import torch
+# import torch (Removed for Lean)
 
 def is_gpu_available():
-    return torch.cuda.is_available()
+    return os.path.exists('/dev/nvidia0')
 
 # Set the default local storage directory
 STORAGE_PATH = "/tmp/"

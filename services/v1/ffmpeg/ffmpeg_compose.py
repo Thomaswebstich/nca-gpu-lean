@@ -22,10 +22,11 @@ import json
 import re
 from services.file_management import download_file
 from config import LOCAL_STORAGE_PATH
-import torch
+# import torch (Removed for Lean)
+import os
 
 def is_gpu_available():
-    return torch.cuda.is_available()
+    return os.path.exists('/dev/nvidia0')
 
 def get_extension_from_format(format_name):
     # Mapping of common format names to file extensions
