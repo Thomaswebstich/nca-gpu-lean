@@ -69,7 +69,7 @@ ENV DEBIAN_FRONTEND=noninteractive
 ENV PATH="/usr/local/bin:${PATH}"
 ENV PYTHONUNBUFFERED=1
 
-# Install ONLY runtime dependencies (no compilers!)
+# Install runtime dependencies
 RUN apt-get update && apt-get install -y --no-install-recommends \
     python3 python3-pip ca-certificates libssl3 fonts-liberation fontconfig \
     libnss3 libatk1.0-0 libatk-bridge2.0-0 libcups2 libxcomposite1 libxrandr2 \
@@ -78,15 +78,20 @@ RUN apt-get update && apt-get install -y --no-install-recommends \
     && rm -rf /var/lib/apt/lists/* \
     && ln -s /usr/bin/python3 /usr/bin/python
 
-# Copy compiled tools from builder
+# Copy compiled tools (FFmpeg, SRT, libass, etc.) from builder
 COPY --from=builder /usr/local /usr/local
-COPY --from=builder /install /usr/local
 
-# Update linker for new libraries
+# Update linker
 RUN ldconfig
 
-# Copy application files
 WORKDIR /app
+
+# Install Python requirements here (cleaner than prefix copying)
+COPY requirements.txt .
+RUN pip3 install --no-cache-dir --upgrade pip && \
+    pip3 install --no-cache-dir -r requirements.txt
+
+# Copy application files
 COPY ./fonts /usr/share/fonts/custom
 RUN fc-cache -f -v
 COPY . .
@@ -95,8 +100,8 @@ COPY . .
 RUN useradd -m appuser && chown -R appuser:appuser /app
 USER appuser
 
-# Install Playwright Chromium (This is the only remaining heavy part, but essential)
-RUN playwright install chromium
+# Install Playwright Chromium
+RUN python3 -m playwright install chromium
 
 EXPOSE 8080
 
