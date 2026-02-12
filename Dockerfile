@@ -58,15 +58,19 @@ RUN git clone https://github.com/FFmpeg/FFmpeg.git ffmpeg && cd ffmpeg && git ch
     make -j$(nproc) && make install && cd .. && rm -rf ffmpeg
 
 # ========== STAGE 2: RUNNER (LEAN) ==========
-FROM nvidia/cuda:11.8.0-runtime-ubuntu22.04
+# ========== STAGE 2: RUNNER (ULTRA-PORTABLE) ==========
+# Use OpenGL base image which has EGL/GLX pre-configured correctly
+FROM nvidia/opengl:1.2-glvnd-runtime-ubuntu22.04
 
 ENV DEBIAN_FRONTEND=noninteractive
 ENV PATH="/usr/local/bin:${PATH}"
 ENV PYTHONUNBUFFERED=1
+# Standard NVIDIA env vars for all runtimes
 ENV NVIDIA_VISIBLE_DEVICES=all
 ENV NVIDIA_DRIVER_CAPABILITIES=all
 
-# Install runtime dependencies (including FFmpeg shared libraries)
+# Install runtime dependencies
+# We need to add CUDA runtime libs manually since we are on OpenGL base
 RUN apt-get update && apt-get install -y --no-install-recommends \
     python3 python3-pip ca-certificates libssl3 fonts-liberation fontconfig \
     libnss3 libatk1.0-0 libatk-bridge2.0-0 libcups2 libxcomposite1 libxrandr2 \
@@ -74,7 +78,7 @@ RUN apt-get update && apt-get install -y --no-install-recommends \
     libgtk-3-0 libvulkan1 libegl1 libfribidi0 libharfbuzz0b curl \
     xvfb chromium-browser libgl1 libglx-mesa0 libgl1-mesa-dri \
     mesa-utils vulkan-tools \
-    # FFmpeg runtime shared libraries (needed for the multi-stage build)
+    # FFmpeg runtime shared libraries
     libx264-163 libx265-199 libvpx7 libmp3lame0 libopus0 \
     libvorbis0a libvorbisenc2 libtheora0 libspeex1 libwebp7 libwebpmux3 \
     libnuma1 libfreetype6 libaom3 libdav1d5 libgnutls30 libzimg2 \
@@ -84,7 +88,7 @@ RUN apt-get update && apt-get install -y --no-install-recommends \
     && ln -s /usr/bin/python3 /usr/bin/python \
     && mkdir -p /tmp/.X11-unix && chmod 1777 /tmp/.X11-unix
 
-# Copy compiled tools (FFmpeg, SRT, libass, etc.) from builder
+# Copy compiled tools from builder
 COPY --from=builder /usr/local /usr/local
 
 # Update linker
@@ -92,7 +96,7 @@ RUN ldconfig
 
 WORKDIR /app
 
-# Install Python requirements first (for better Docker layer caching)
+# Install Python requirements
 COPY requirements.txt .
 RUN pip3 install --no-cache-dir --upgrade pip && \
     pip3 install --no-cache-dir -r requirements.txt
@@ -104,19 +108,17 @@ RUN fc-cache -f -v
 # Copy application files
 COPY . .
 
-# Setup User
-RUN useradd -m appuser && chown -R appuser:appuser /app
-USER appuser
+# Run as ROOT for maximum device compatibility across providers
+# (Avoids permission issues with /dev/nvidia* and shared memory)
+# USER root is default, so we just don't create appuser
 
 # Install Playwright Chromium
 RUN python3 -m playwright install chromium
 
 EXPOSE 8080
 
-# Health check for startup probe
+# Health check
 HEALTHCHECK --interval=5s --timeout=3s --start-period=10s --retries=3 \
     CMD curl -f http://localhost:8080/health || exit 1
 
-# Use exec form CMD directly — no shell script wrapper needed.
-# This ensures gunicorn runs as PID 1 and receives signals correctly.
 CMD ["gunicorn", "--config", "gunicorn.conf.py", "app:app"]
