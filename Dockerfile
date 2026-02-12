@@ -116,4 +116,4 @@ HEALTHCHECK --interval=5s --timeout=3s --start-period=10s --retries=3 \
 
 # Use exec form CMD directly — no shell script wrapper needed.
 # This ensures gunicorn runs as PID 1 and receives signals correctly.
-CMD ["xvfb-run", "--auto-servernum", "--server-args='-screen 0 1920x1080x24'", "gunicorn", "--config", "gunicorn.conf.py", "app:app"]
+CMD ["gunicorn", "--config", "gunicorn.conf.py", "app:app"]
