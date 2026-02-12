@@ -63,6 +63,8 @@ FROM nvidia/cuda:11.8.0-runtime-ubuntu22.04
 ENV DEBIAN_FRONTEND=noninteractive
 ENV PATH="/usr/local/bin:${PATH}"
 ENV PYTHONUNBUFFERED=1
+ENV NVIDIA_VISIBLE_DEVICES=all
+ENV NVIDIA_DRIVER_CAPABILITIES=all
 
 # Install runtime dependencies (including FFmpeg shared libraries)
 RUN apt-get update && apt-get install -y --no-install-recommends \
@@ -71,6 +73,7 @@ RUN apt-get update && apt-get install -y --no-install-recommends \
     libxdamage1 libgbm1 libasound2 libpangocairo-1.0-0 libpangoft2-1.0-0 \
     libgtk-3-0 libvulkan1 libegl1 libfribidi0 libharfbuzz0b curl \
     xvfb chromium-browser libgl1 libglx-mesa0 libgl1-mesa-dri \
+    mesa-utils vulkan-tools \
     # FFmpeg runtime shared libraries (needed for the multi-stage build)
     libx264-163 libx265-199 libvpx7 libmp3lame0 libopus0 \
     libvorbis0a libvorbisenc2 libtheora0 libspeex1 libwebp7 libwebpmux3 \
