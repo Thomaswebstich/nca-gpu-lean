@@ -58,7 +58,7 @@ RUN git clone https://github.com/FFmpeg/FFmpeg.git ffmpeg && cd ffmpeg && git ch
     make -j$(nproc) && make install && cd .. && rm -rf ffmpeg
 
 # ========== STAGE 2: RUNNER (LEAN) ==========
-# ========== STAGE 2: RUNNER (ULTRA-PORTABLE) ==========
+# ========== STAGE 2: RUNNER (LEAN + ROBUST) ==========
 # Use OpenGL base image which has EGL/GLX pre-configured correctly
 FROM nvidia/opengl:1.2-glvnd-runtime-ubuntu22.04
 
@@ -71,13 +71,14 @@ ENV NVIDIA_DRIVER_CAPABILITIES=all
 
 # Install runtime dependencies
 # We need to add CUDA runtime libs manually since we are on OpenGL base
+# ADDING 'ffmpeg' package to ensure we have a working fallback if custom build fails
 RUN apt-get update && apt-get install -y --no-install-recommends \
     python3 python3-pip ca-certificates libssl3 fonts-liberation fontconfig \
     libnss3 libatk1.0-0 libatk-bridge2.0-0 libcups2 libxcomposite1 libxrandr2 \
     libxdamage1 libgbm1 libasound2 libpangocairo-1.0-0 libpangoft2-1.0-0 \
     libgtk-3-0 libvulkan1 libegl1 libfribidi0 libharfbuzz0b curl \
     xvfb chromium-browser libgl1 libglx-mesa0 libgl1-mesa-dri \
-    mesa-utils vulkan-tools \
+    mesa-utils vulkan-tools ffmpeg \
     # FFmpeg runtime shared libraries
     libx264-163 libx265-199 libvpx7 libmp3lame0 libopus0 \
     libvorbis0a libvorbisenc2 libtheora0 libspeex1 libwebp7 libwebpmux3 \
